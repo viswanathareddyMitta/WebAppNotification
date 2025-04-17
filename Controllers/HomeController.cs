@@ -26,5 +26,14 @@ namespace NotifierWeb.Controllers
 
             return View();
         }
+
+        public ActionResult TestGraph()
+        {
+            ViewBag.Message = "Your contact page.";
+
+            return View();
+        }
+
+
     }
 }
