@@ -12,14 +12,20 @@ namespace NotifierWeb.Controllers
         {
             return View();
         }
-
+        /// <summary>
+        /// //
+        /// </summary>
+        /// <returns></returns>
         public ActionResult About()
         {
             ViewBag.Message = "Your application description page.";
 
             return View();
         }
-
+        /// <summary>
+        /// //
+        /// </summary>
+        /// <returns></returns>
         public ActionResult Contact()
         {
             ViewBag.Message = "Your contact page.";
