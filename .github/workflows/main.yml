@@ -14,28 +14,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
 
-      - name: Restore dependencies
-        run: dotnet restore
+      # Build using MSBuild for legacy ASP.NET
+      - name: Build solution
+        run: msbuild WebAppNotification/NotifierWeb.csproj /p:Configuration=Release
 
-      - name: Build
-        run: dotnet build --configuration Release --no-restore
+      # If you have unit tests, adjust the following step accordingly
+      # Example uses vstest.console.exe for test projects
+      - name: Run tests
+        run: |
+          if (Test-Path "WebAppNotification/bin/Release") {
+            $testDLLs = Get-ChildItem -Path WebAppNotification/bin/Release -Recurse -Filter *.Tests.dll
+            foreach ($dll in $testDLLs) {
+              & "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\Extensions\TestPlatform\vstest.console.exe" $dll.FullName
+            }
+          }
 
-      - name: Test
-        run: dotnet test --no-build --verbosity normal
-
-      - name: Publish
-        run: dotnet publish -c Release -o publish
+      - name: Publish (zip) build artifacts
+        run: |
+          Compress-Archive -Path WebAppNotification/bin/Release/* -DestinationPath app.zip
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: app
-          path: publish/
+          path: app.zip
 
   tag:
     needs: build-and-test
@@ -80,7 +85,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: app
-          path: app
+          path: .
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -88,6 +93,6 @@ jobs:
           name: Release ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
           draft: true
-          files: app/**
+          files: app.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
