@@ -18,10 +18,10 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Restore NuGet packages
-        run: nuget restore WebAppNotification/NotifierWeb.csproj
+        run: nuget restore NotifierWeb.csproj
 
       - name: Build solution
-        run: msbuild WebAppNotification/NotifierWeb.csproj /p:Configuration=Release
+        run: msbuild NotifierWeb.csproj /p:Configuration=Release
 
       # Optional: If you have test projects, adjust the following as needed.
       # - name: Run tests
@@ -31,7 +31,7 @@ jobs:
 
       - name: Publish (zip) build artifacts
         run: |
-          Compress-Archive -Path WebAppNotification/bin/Release/* -DestinationPath app.zip
+          Compress-Archive -Path bin/Release/* -DestinationPath app.zip
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
