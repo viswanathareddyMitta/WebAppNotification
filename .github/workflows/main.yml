@@ -2,9 +2,10 @@ name: Build, Test, Tag, and Release
 
 on:
   push:
-    branches:
-      - master
+    branches: [ "master" ]
   pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
 
 jobs:
   build-test-tag-release:
@@ -20,7 +21,7 @@ jobs:
         run: nuget restore NotifierWeb.csproj -SolutionDirectory ${{ github.workspace }}
 
       - name: Build solution
-        run: msbuild WebAppNotification/NotifierWeb.csproj /p:Configuration=Release
+        run: msbuild NotifierWeb.csproj /p:Configuration=Release
 
       - name: List files after build (diagnostics)
         run: Get-ChildItem -Path . -Recurse -Force
