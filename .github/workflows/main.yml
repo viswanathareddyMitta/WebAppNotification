@@ -29,8 +29,8 @@ jobs:
       - name: Archive build output
         shell: pwsh
         run: |
-          $release = "WebAppNotification/bin/Release"
-          $bin = "WebAppNotification/bin"
+          $release = "bin/Release"
+          $bin = "bin"
           if (Test-Path $release -and (Get-ChildItem $release | Measure-Object).Count -gt 0) {
             Write-Host "Archiving from $release"
             Compress-Archive -Path "$release/*" -DestinationPath app.zip
