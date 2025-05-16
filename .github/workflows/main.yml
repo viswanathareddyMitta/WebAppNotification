@@ -2,62 +2,58 @@ name: Build, Test, Tag, and Release
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "master" ]
-  workflow_dispatch:
 
 jobs:
-  build-and-test:
+  build-test-tag-release:
     runs-on: windows-latest
+
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
-
       - name: Restore NuGet packages
         run: nuget restore NotifierWeb.csproj -SolutionDirectory ${{ github.workspace }}
 
       - name: Build solution
-        run: msbuild NotifierWeb.csproj /p:Configuration=Release
+        run: msbuild WebAppNotification/NotifierWeb.csproj /p:Configuration=Release
 
-      - name: List all files and folders after build
-        run: Get-ChildItem -Path WebAppNotification -Recurse -Force
-        
-      - name: List build output for debugging
+      - name: List files after build (diagnostics)
+        run: Get-ChildItem -Path . -Recurse -Force
+
+      - name: Run tests
+        shell: pwsh
         run: |
-          Write-Host "Checking WebAppNotification/bin/Release/"
-          if (Test-Path "WebAppNotification/bin/Release") {
-          Get-ChildItem -Path "WebAppNotification/bin/Release" -Recurse
+          $dlls = Get-ChildItem -Path "WebAppNotification/bin/Release" -Filter *.dll -Recurse | Where-Object { $_.Name -notmatch 'ref|TestAdapter' }
+          if ($dlls) {
+            foreach ($dll in $dlls) {
+              Write-Host "Testing $($dll.FullName)"
+              vstest.console.exe $dll.FullName
+            }
           } else {
-          Write-Host "WebAppNotification/bin/Release does not exist."
-          }
-          Write-Host "Checking WebAppNotification/bin/"
-          if (Test-Path "WebAppNotification/bin") {
-          Get-ChildItem -Path "WebAppNotification/bin" -Recurse
-          } else {
-          Write-Host "WebAppNotification/bin does not exist."
+            Write-Host "No test DLLs found."
+            exit 1
           }
 
-        
-      # Optional: If you have test projects, adjust the following as needed.
-      # - name: Run tests
-      #   run: |
-      #     # Example test step for MSTest/NUnit/xUnit, update as per your setup
-      #     # vstest.console.exe WebAppNotification.Tests\bin\Release\*.dll
-
-      - name: Publish (zip) build artifacts
+      - name: Archive build output
+        shell: pwsh
         run: |
-             if (Test-Path "WebAppNotification/bin/Release") {
-             Compress-Archive -Path WebAppNotification/bin/Release/* -DestinationPath app.zip
-             } elseif (Test-Path "WebAppNotification/bin") {
-              Compress-Archive -Path WebAppNotification/bin/* -DestinationPath app.zip
-              } else {
-             Write-Host "No build artifacts found."
-             exit 1
-              }
+          $release = "WebAppNotification/bin/Release"
+          $bin = "WebAppNotification/bin"
+          if (Test-Path $release -and (Get-ChildItem $release | Measure-Object).Count -gt 0) {
+            Write-Host "Archiving from $release"
+            Compress-Archive -Path "$release/*" -DestinationPath app.zip
+          } elseif (Test-Path $bin -and (Get-ChildItem $bin | Measure-Object).Count -gt 0) {
+            Write-Host "Archiving from $bin"
+            Compress-Archive -Path "$bin/*" -DestinationPath app.zip
+          } else {
+            Write-Host "No build artifacts found to compress."
+            exit 1
+          }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -65,57 +61,33 @@ jobs:
           name: app
           path: app.zip
 
-  tag:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Fetch all tags
-        run: git fetch --tags
-
-      - name: Get latest tag
-        id: get_tag
+      - name: Get version from csproj
+        id: get_version
+        shell: pwsh
         run: |
-          git_tag=$(git tag --list "v*" --sort=-v:refname | head -n 1)
-          if [[ -z "$git_tag" ]]; then
-            echo "tag=v1.0.0" >> $GITHUB_OUTPUT
-          else
-            version=$(echo $git_tag | sed 's/v//')
-            arr=(${version//./ })
-            ((arr[2]++))
-            new_tag="v${arr[0]}.${arr[1]}.${arr[2]}"
-            echo "tag=$new_tag" >> $GITHUB_OUTPUT
-          fi
+          [xml]$proj = Get-Content WebAppNotification/NotifierWeb.csproj
+          $version = $proj.Project.PropertyGroup.Version
+          if (-not $version) {
+            $version = "1.0.${{ github.run_number }}"
+          }
+          echo "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Create new tag and push
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      - name: Create Git tag
+        if: github.ref == 'refs/heads/main'
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag ${{ steps.get_tag.outputs.tag }}
-          git push https://${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git ${{ steps.get_tag.outputs.tag }}
-
-  release:
-    needs: [build-and-test, tag]
-    runs-on: windows-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: app
-          path: .
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git tag -a "v${{ env.VERSION }}" -m "Release v${{ env.VERSION }}"
+          git push origin "v${{ env.VERSION }}"
 
       - name: Create GitHub Release
+        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          name: Release ${{ github.ref_name }}
-          tag_name: ${{ github.ref_name }}
-          draft: true
+          tag_name: v${{ env.VERSION }}
+          name: Release v${{ env.VERSION }}
+          body: |
+            Automated release for v${{ env.VERSION }}
           files: app.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
