@@ -29,7 +29,7 @@ jobs:
       - name: Run tests
         shell: pwsh
         run: |
-          $dlls = Get-ChildItem -Path "WebAppNotification/bin/Release" -Filter *.dll -Recurse | Where-Object { $_.Name -notmatch 'ref|TestAdapter' }
+          $dlls = Get-ChildItem -Path "bin/Release" -Filter *.dll -Recurse | Where-Object { $_.Name -notmatch 'ref|TestAdapter' }
           if ($dlls) {
             foreach ($dll in $dlls) {
               Write-Host "Testing $($dll.FullName)"
