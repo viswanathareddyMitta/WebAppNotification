@@ -22,8 +22,22 @@ jobs:
 
       - name: Build solution
         run: msbuild NotifierWeb.csproj /p:Configuration=Release
-      - name: List build output
-        run: Get-ChildItem -Path WebAppNotification/bin/ -Recurse
+        
+      - name: List build output for debugging
+        run: |
+          Write-Host "Checking WebAppNotification/bin/Release/"
+          if (Test-Path "WebAppNotification/bin/Release") {
+          Get-ChildItem -Path "WebAppNotification/bin/Release" -Recurse
+          } else {
+          Write-Host "WebAppNotification/bin/Release does not exist."
+          }
+          Write-Host "Checking WebAppNotification/bin/"
+          if (Test-Path "WebAppNotification/bin") {
+          Get-ChildItem -Path "WebAppNotification/bin" -Recurse
+          } else {
+          Write-Host "WebAppNotification/bin does not exist."
+          }
+
         
       # Optional: If you have test projects, adjust the following as needed.
       # - name: Run tests
