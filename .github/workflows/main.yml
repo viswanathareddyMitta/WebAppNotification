@@ -22,7 +22,9 @@ jobs:
 
       - name: Build solution
         run: msbuild NotifierWeb.csproj /p:Configuration=Release
-
+      - name: List build output
+        run: Get-ChildItem -Path WebAppNotification/bin/ -Recurse
+        
       # Optional: If you have test projects, adjust the following as needed.
       # - name: Run tests
       #   run: |
@@ -31,7 +33,14 @@ jobs:
 
       - name: Publish (zip) build artifacts
         run: |
-          Compress-Archive -Path WebAppNotification/bin/Release/* -DestinationPath app.zip
+             if (Test-Path "WebAppNotification/bin/Release") {
+             Compress-Archive -Path WebAppNotification/bin/Release/* -DestinationPath app.zip
+             } elseif (Test-Path "WebAppNotification/bin") {
+              Compress-Archive -Path WebAppNotification/bin/* -DestinationPath app.zip
+              } else {
+             Write-Host "No build artifacts found."
+             exit 1
+              }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
