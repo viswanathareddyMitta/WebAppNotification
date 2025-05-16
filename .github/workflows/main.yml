@@ -35,7 +35,7 @@ jobs:
         shell: pwsh
         run: |
             $obj = "obj/Release"
-            if (Test-Path $obj -and (Get-ChildItem $obj | Measure-Object).Count -gt 0) {
+            if ((Test-Path $obj) -and ((Get-ChildItem $obj | Measure-Object).Count -gt 0)) {
             Write-Host "Archiving from $obj"
             Compress-Archive -Path "$obj/*" -DestinationPath app.zip
             } else {
@@ -53,7 +53,7 @@ jobs:
         id: get_version
         shell: pwsh
         run: |
-          [xml]$proj = Get-Content WebAppNotification/NotifierWeb.csproj
+          [xml]$proj = Get-Content NotifierWeb.csproj
           $version = $proj.Project.PropertyGroup.Version
           if (-not $version) {
             $version = "1.0.${{ github.run_number }}"
