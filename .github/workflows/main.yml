@@ -67,15 +67,15 @@ jobs:
         if: github.ref == 'refs/heads/master'
         shell: pwsh
         run: |
-             if (-not $env:VERSION) {
-             Write-Error "VERSION environment variable is not set!"
-             exit 1
-              }
-              $TAG = "v$($env:VERSION)"
-              git config user.name "${{ github.actor }}"
-              git config user.email "${{ github.actor }}@users.noreply.github.com"
-              git tag -a $TAG -m "Release $TAG"
-              git push origin $TAG
+            $ver = "${{ env.VERSION }}".Trim()
+            if (-not $ver) {
+            $ver = "$(Get-Date -Format yyyyMMdd)-${{ github.run_number }}"
+            }
+            $tag = "v$ver"
+            git config user.name "${{ github.actor }}"
+            git config user.email "${{ github.actor }}@users.noreply.github.com"
+            git tag -a $tag -m "Release $tag"
+            git push origin $tag
     
       - name: Create GitHub Release
         if: github.ref == 'refs/heads/master'
