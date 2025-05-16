@@ -1,5 +1,8 @@
 name: Build, Test, Tag, and Release
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: [ "master" ]
@@ -61,7 +64,7 @@ jobs:
           echo "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Create Git tag
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/master'
         shell: pwsh
         run: |
              if (-not $env:VERSION) {
