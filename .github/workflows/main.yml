@@ -18,7 +18,7 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Restore NuGet packages
-        run: nuget restore WebAppNotification.sln
+        run: nuget restore NotifierWeb.csproj -SolutionDirectory ${{ github.workspace }}
 
       - name: Build solution
         run: msbuild NotifierWeb.csproj /p:Configuration=Release
