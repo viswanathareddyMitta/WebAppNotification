@@ -21,7 +21,7 @@ jobs:
         run: nuget restore NotifierWeb.csproj -SolutionDirectory ${{ github.workspace }}
 
       - name: Build solution
-        run: msbuild WebAppNotification/NotifierWeb.csproj /p:Configuration=Release
+        run: msbuild NotifierWeb.csproj /p:Configuration=Release
 
       - name: List all files and folders after build
         run: Get-ChildItem -Path WebAppNotification -Recurse -Force
