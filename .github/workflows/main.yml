@@ -34,18 +34,14 @@ jobs:
       - name: Archive build output
         shell: pwsh
         run: |
-          $release = "bin/Release"
-          $bin = "bin"
-          if (Test-Path $release -and (Get-ChildItem $release | Measure-Object).Count -gt 0) {
-            Write-Host "Archiving from $release"
-            Compress-Archive -Path "$release/*" -DestinationPath app.zip
-          } elseif (Test-Path $bin -and (Get-ChildItem $bin | Measure-Object).Count -gt 0) {
-            Write-Host "Archiving from $bin"
-            Compress-Archive -Path "$bin/*" -DestinationPath app.zip
-          } else {
+            $obj = "obj/Release"
+            if (Test-Path $obj -and (Get-ChildItem $obj | Measure-Object).Count -gt 0) {
+            Write-Host "Archiving from $obj"
+            Compress-Archive -Path "$obj/*" -DestinationPath app.zip
+            } else {
             Write-Host "No build artifacts found to compress."
             exit 1
-          }
+            }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
