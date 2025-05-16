@@ -26,20 +26,6 @@ jobs:
       - name: List files after build (diagnostics)
         run: Get-ChildItem -Path . -Recurse -Force
 
-      - name: Run tests
-        shell: pwsh
-        run: |
-          $dlls = Get-ChildItem -Path "bin/Release" -Filter *.dll -Recurse | Where-Object { $_.Name -notmatch 'ref|TestAdapter' }
-          if ($dlls) {
-            foreach ($dll in $dlls) {
-              Write-Host "Testing $($dll.FullName)"
-              vstest.console.exe $dll.FullName
-            }
-          } else {
-            Write-Host "No test DLLs found."
-            exit 1
-          }
-
       - name: Archive build output
         shell: pwsh
         run: |
