@@ -23,6 +23,11 @@ jobs:
       - name: Build solution
         run: msbuild NotifierWeb.csproj /p:Configuration=Release
 
+      - name: Print working directory and list files
+        run: |
+              pwd
+              ls -Recurse
+
       - name: List files after build (diagnostics)
         run: Get-ChildItem -Path . -Recurse -Force
 
