@@ -19,7 +19,7 @@ jobs:
 
       # Build using MSBuild for legacy ASP.NET
       - name: Build solution
-        run: msbuild WebAppNotification/NotifierWeb.csproj /p:Configuration=Release
+        run: msbuild NotifierWeb.csproj /p:Configuration=Release
 
       # If you have unit tests, adjust the following step accordingly
       # Example uses vstest.console.exe for test projects
